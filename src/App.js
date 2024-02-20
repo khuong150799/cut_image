@@ -16,10 +16,13 @@ function App() {
   useEffect(() => {
     const getData = async () => {
       const result = await axios.get(
-        "http://192.168.102.13:3010/api/user/getinfo"
+        "http://localhost:8000/api/new/getbyid/33"
       );
       setData(result.data);
       console.log(result);
+      const nameImage = result.data.newData[0].image
+      setImageURL(`http://localhost:8000/new/images/${nameImage}`)
+      // setImg(nameImage)
     };
     getData();
   }, []);
@@ -42,32 +45,34 @@ function App() {
     return new File([u8arr], filename, { type: mime });
   }
   const axiosUpload = axios.create({
-    baseURL: "http://192.168.102.13:3010/api",
+    baseURL: "http://localhost:8000/api/new/updatebyid/33",
   });
   const handleCrop = async () => {
     cropperRef.current.cropper.enable();
     const croppedCanvas = cropperRef.current.cropper.getCroppedCanvas();
     const croppedImage = croppedCanvas.toDataURL();
-    // console.log(croppedImage);
+    // console.log(Base64ToFile(croppedImage, "file"));
     setImageURL(croppedImage);
     setShowCrop(false);
     // console.log(Base64ToFile(croppedImage, "file"));
     // Do something with the cropped image
     const formData = new FormData();
+    console.log(Base64ToFile(croppedImage, "file"));
     formData.append("image", Base64ToFile(croppedImage, "file"));
+    formData.append("title", '11111');
+    formData.append("des", 'tess');
+    // console.log(formData);
     // console.log(formData.append("image", Base64ToFile(croppedImage, "file")));
     try {
-      const url = `http://192.168.102.13:3010/api/customer/upload-image/1`;
+      // const url = `http://192.168.102.13:3010/api/customer/upload-image/1`;
       const response = await axiosUpload({
         method: "PUT",
-        url,
+        // url,
         data: formData,
       });
       console.log(response);
       setImg(response?.data?.data?.newData?.image);
       if (response?.data?.result) {
-
-
         const Toast = Swal.mixin({
           toast: true,
           position: "bottom-end",
@@ -76,10 +81,10 @@ function App() {
           timerProgressBar: true,
           width: 500,
         });
-  
+
         Toast.fire({
           icon: "success",
-          title: response?.data?.data?.msg,
+          title: 'Cập nhật thành công',
         });
       } else {
         const Toast = Swal.mixin({
@@ -90,18 +95,42 @@ function App() {
           timerProgressBar: true,
           width: 500,
         });
-  
+
         Toast.fire({
           icon: "error",
-          title: response?.data?.data?.msg,
+          title: 'Cập nhật thất bại',
         });
       }
-
     } catch (error) {
       console.log(error);
     }
-    
   };
+  // useEffect(() => {
+  //   const cropper = cropperRef.current;
+
+  //   if (cropper) {
+  //     // Tính toán giá trị minZoom dựa trên kích thước ban đầu của ảnh
+  //     const initialImageWidth = cropper.getCroppedCanvas().width;
+  //     const initialImageHeight = cropper.getCroppedCanvas().height;
+  //     const initialAspectRatio = initialImageWidth / initialImageHeight;
+  //     const minZoom = Math.max(
+  //       initialImageWidth / cropper.container.offsetWidth,
+  //       initialImageHeight / cropper.container.offsetHeight
+  //     );
+
+  //     // Đặt sự kiện zoom và kiểm soát giới hạn zoom tối thiểu
+  //     cropper.setOptions({
+  //       zoomable: true,
+  //       minZoom: minZoom,
+  //       zoom: (event) => {
+  //         const currentZoom = cropper.getZoom();
+  //         if (currentZoom < minZoom) {
+  //           cropper.zoomTo(minZoom);
+  //         }
+  //       },
+  //     });
+  //   }
+  // }, [showCrop]);
   // console.log(img);
   return (
     <div className="App">
@@ -132,7 +161,7 @@ function App() {
             }}
           >
             <img
-              src={`http://192.168.102.13:3010/customer/thumb/${img}`}
+              src={`http://localhost:8000/new/images/${img}`}
               style={{
                 width: "100%",
                 height: "100%",
@@ -148,13 +177,19 @@ function App() {
               style={{
                 height: "auto",
                 maxHeight: "50vh",
-                width: "60vh",
+                width: "600px",
                 border: "2px solid blue",
                 margin: "0 auto",
               }}
               // Cropper.js options
+              // zoomable={false}
+              minCanvasWidth={600}
               initialAspectRatio={1 / 1}
-              guides={false}
+              guides={true}
+              aspectRatio={1} 
+              cropBoxResizable={false}
+              autoCropArea={0.8}
+              dragMode="none"
               crop={onCrop}
               ref={cropperRef}
             />
@@ -200,6 +235,7 @@ function App() {
                     // console.log(e.target.files[0]);
                     setShowCrop(true);
                     const file = e.target.files[0];
+                    console.log(file);
                     const reader = new FileReader();
                     reader.readAsDataURL(file);
                     reader.onloadend = function () {
